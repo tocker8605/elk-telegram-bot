@@ -1,6 +1,10 @@
 module.exports = function(api, message) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const { chat, from } = message;
-        resolve(api.sendMessage(chat.id, '- help -'));
+        api.sendMessage(chat.id, '- help -').then((value) => {
+            resolve(value);
+        }).catch((error) => {
+            reject(error);
+        })
     });
 };

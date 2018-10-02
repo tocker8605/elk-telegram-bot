@@ -10,7 +10,7 @@ const http = require('http');
 
 const bot = require('../bot/botModule');
 const botMethodHelp = require('../bot/methods/help');
-
+const botScheduleElasticsearch = require('../bot/schedules/elasticsearch');
 /**
  * Get port from environment and store in Express.
  */
@@ -37,7 +37,7 @@ server.on('listening', onListening);
  */
 bot.init(process.env.TELEGRAM_TOKEN);
 bot.addMethod(/^\/help/, botMethodHelp);
-
+bot.addSchedule('* * * * *', botScheduleElasticsearch, process.env.TELEGRAM_SUBSCRIBERS.split(','));
 
 /**
  * Normalize a port into a number, string, or false.

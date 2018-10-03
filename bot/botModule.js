@@ -64,6 +64,12 @@ bot.addSubscriber = function(subscribers) {
     });
 };
 
+bot.removeSubscriber = function(subscribers) {
+    subscribers.forEach((subscriber) => {
+        this.subscribers.delete(subscriber);
+    });
+};
+
 bot.clearSubscriber = function() {
     this.subscribers.clear();
 };

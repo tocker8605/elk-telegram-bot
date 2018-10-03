@@ -7,6 +7,15 @@ const logger = require('morgan');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 
+const bot = require('./bot/botModule');
+const botMethodHelp = require('./bot/methods/help');
+const botScheduleElasticsearch = require('./bot/schedules/elasticsearch');
+
+bot.init(process.env.TELEGRAM_TOKEN);
+bot.addSubscriber(process.env.TELEGRAM_SUBSCRIBERS.split(','));
+bot.addMethod(/^\/help/, botMethodHelp);
+bot.addSchedule('* * * * *', botScheduleElasticsearch);
+
 let app = express();
 
 // view engine setup

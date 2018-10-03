@@ -1,13 +1,42 @@
-module.exports = function(api, subscribers) {
+const request = require('request');
+const botModule = require('../botModule');
+// http://localhost:9200/log-analytics-*/_search?q=errormsg:Duplicate%20entry
+// https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html#ranges-on-dates
+
+module.exports = function() {
     return new Promise((resolve, reject) => {
-        let sendPromises = [];
-        subscribers.forEach((subscriber) => {
-            sendPromises.push(api.sendMessage(subscriber, 'Hello'))
+        request.post({
+            uri: "http://localhost:9200/log-analytics-*/_search?q=errormsg:Duplicate entry",
+            headers: {
+                "Content-type": "application/json",
+            },
+            json: {
+                "query": {
+                    "range" : {
+                        "@timestamp" : {
+                            "gte": "2018-08-01 00:00:00",
+                            "lte": "now",
+                            "format": "yyyy-MM-dd HH:mm:ss"
+                        }
+                    }
+                }
+            }
+        }, (error, response, body) => {
+            if (error != null) {
+                return reject(error);
+            }
+            let results = body['hits']['hits'] || [];
+            if (results.length > 0) {
+                botModule.sendMessageToSubscriber('Duplicate entry error: ' + results.length).then((values) => {
+                    return resolve(values);
+                }).catch((error) => {
+                    return reject(error);
+                })
+            }
+
+            resolve();
         });
-        Promise.all(sendPromises).then((values) => {
-            resolve(values);
-        }).catch((error) => {
-            reject(error);
-        })
-    });
+    }).catch((reason => {
+        botModule.sendMessageToSubscriber('Elasticsearch error : ' + reason);
+    }));
 };

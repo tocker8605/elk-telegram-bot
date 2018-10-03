@@ -1,7 +1,9 @@
-module.exports = function(api, message) {
+const botModule = require('../botModule');
+
+module.exports = function(message) {
     return new Promise((resolve, reject) => {
         const { chat, from } = message;
-        api.sendMessage(chat.id, '- help -').then((value) => {
+        botModule.api.sendMessage(chat.id, '- help -').then((value) => {
             resolve(value);
         }).catch((error) => {
             reject(error);

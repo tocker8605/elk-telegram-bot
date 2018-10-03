@@ -7,6 +7,7 @@ bot.init = function(token) {
     this.api = new TelegramBot(token, { polling: true });
     this.methods = [];
     this.schedules = [];
+    this.subscribers = new Set();
 
     this.api.on('message', (message) => {
         const { text, from } = message;
@@ -17,7 +18,7 @@ bot.init = function(token) {
 
         this.methods.forEach(method => {
             if (method.regex.test(text)) {
-                method.function(this.api, message)
+                method.function(message)
                     .then(
                         (value) => {
                             // TODO: logger
@@ -45,8 +46,8 @@ bot.clearMethod = function() {
     this.methods.clean();
 };
 
-bot.addSchedule = function(cron, scheduleFunction, subscribers) {
-    let newSchedule = NodeSchedule.scheduleJob(cron, scheduleFunction.bind(null, this.api, subscribers));
+bot.addSchedule = function(cron, scheduleFunction) {
+    let newSchedule = NodeSchedule.scheduleJob(cron, scheduleFunction);
     this.schedules.push(newSchedule);
     return newSchedule;
 };
@@ -55,4 +56,22 @@ bot.clearSchedule = function() {
     this.schedules.forEach((sch) => {
         sch.cancel();
     })
+};
+
+bot.addSubscriber = function(subscribers) {
+    subscribers.forEach((subscriber) => {
+        this.subscribers.add(subscriber);
+    });
+};
+
+bot.clearSubscriber = function() {
+    this.subscribers.clear();
+};
+
+bot.sendMessageToSubscriber = function(message) {
+    let sendPromises = [];
+    this.subscribers.forEach((subscriber) => {
+        sendPromises.push(this.api.sendMessage(subscriber, message))
+    });
+    return Promise.all(sendPromises);
 };

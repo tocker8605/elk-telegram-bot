@@ -1,46 +1,49 @@
 const request = require('request');
-const botModule = require('../botModule');
 const {messages, template} = require('../messages/messageTemplateModule');
 
-// http://localhost:9200/log-analytics-*/_search?q=errormsg:Duplicate%20entry
 // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html#ranges-on-dates
 
-module.exports = function() {
+function elasticRequest(alertTitle, indexPattern, queryMap, periodDateMath, alertLength) {
     return new Promise((resolve, reject) => {
         request.post({
-            uri: "http://localhost:9200/log-analytics-*/_search?q=errormsg:Duplicate entry",
+            uri: "http://localhost:9200/" + indexPattern + "/_search",
             headers: {
                 "Content-type": "application/json",
             },
             json: {
                 "query": {
-                    "range" : {
-                        "@timestamp" : {
-                            "gte": "2018-08-01 00:00:00",
-                            "lte": "now",
-                            "format": "yyyy-MM-dd HH:mm:ss"
-                        }
+                    "bool": {
+                        "must": [
+                            {
+                                "match": queryMap
+                            },
+                            {
+                                "range": {
+                                    "@timestamp": {
+                                        "gte": periodDateMath,
+                                        "lte": "now"
+                                    }
+                                }
+                            }
+                        ]
                     }
                 }
             }
         }, (error, response, body) => {
             if (error != null) {
-                return reject(error);
+                return reject(template(messages.CRITICAL_ELK, error));
             }
             let results = body['hits']['hits'] || [];
-            if (results.length > 0) {
-                botModule.sendMessageToSubscriber(
-                    template(messages.ALERT_ELK, '뉴썸', 'Read timeout', 5, results.length)
-                ).then((values) => {
-                    return resolve(values);
-                }).catch((error) => {
-                    return reject(error);
-                })
+            if (results.length > alertLength) {
+                resolve(template(messages.ALERT_ELK, alertTitle, indexPattern + ':' + JSON.stringify(queryMap), periodDateMath, results.length));
             }
-
-            resolve();
+            else {
+                resolve();
+            }
         });
-    }).catch((reason => {
-        botModule.sendMessageToSubscriber(template(messages.CRITICAL_ELK, reason));
-    }));
+    });
+}
+
+module.exports = {
+    elasticsearchReadTimeOut : () => {return elasticRequest('뉴썸', 'log-analytics-*', {'errormsg': 'read time out'}, 'now-60d', 5)}
 };

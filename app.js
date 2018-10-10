@@ -9,12 +9,12 @@ const usersRouter = require('./routes/users');
 
 const bot = require('./bot/botModule');
 const botMethodHelp = require('./bot/methods/help');
-const botScheduleElasticsearch = require('./bot/schedules/elasticsearch');
+const {elasticsearchReadTimeOut} = require('./bot/schedules/elasticsearch');
 
 bot.init(process.env.TELEGRAM_TOKEN);
 bot.addSubscriber(process.env.TELEGRAM_SUBSCRIBERS.split(','));
 bot.addMethod(/^\/help/, botMethodHelp);
-bot.addSchedule('* * * * *', botScheduleElasticsearch);
+bot.addSchedule('* * * * *', elasticsearchReadTimeOut);
 
 let app = express();
 

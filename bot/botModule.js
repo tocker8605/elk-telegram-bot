@@ -46,18 +46,6 @@ bot.clearMethod = function() {
     this.methods.clean();
 };
 
-bot.addSchedule = function(cron, scheduleFunction) {
-    let newSchedule = NodeSchedule.scheduleJob(cron, scheduleFunction);
-    this.schedules.push(newSchedule);
-    return newSchedule;
-};
-
-bot.clearSchedule = function() {
-    this.schedules.forEach((sch) => {
-        sch.cancel();
-    })
-};
-
 bot.addSubscriber = function(subscribers) {
     subscribers.forEach((subscriber) => {
         this.subscribers.add(subscriber);
@@ -79,5 +67,28 @@ bot.sendMessageToSubscriber = function(message) {
     this.subscribers.forEach((subscriber) => {
         sendPromises.push(this.api.sendMessage(subscriber, message))
     });
-    return Promise.all(sendPromises);
+    return Promise.all(sendPromises).catch((error) => {
+        // TODO: logger
+        console.log(error);
+    });
+};
+
+bot.addSchedule = function(cron, scheduleFunction) {
+    let newSchedule = NodeSchedule.scheduleJob(cron, () => {
+        scheduleFunction().then((message) => {
+            if (message) {
+                this.sendMessageToSubscriber(message);
+            }
+        }).catch((errorMessage) => {
+            this.sendMessageToSubscriber('[CRITICAL] ' + errorMessage);
+        })
+    });
+    this.schedules.push(newSchedule);
+    return newSchedule;
+};
+
+bot.clearSchedule = function() {
+    this.schedules.forEach((sch) => {
+        sch.cancel();
+    })
 };

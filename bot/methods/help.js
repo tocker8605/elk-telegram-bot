@@ -1,13 +1,8 @@
-const botModule = require('../botModule');
 const {messages, template} = require('../messages/messageTemplateModule');
 
-module.exports = function(message) {
+module.exports = function(message, matches) {
     return new Promise((resolve, reject) => {
         const { chat, from } = message;
-        botModule.api.sendMessage(chat.id, template(messages.HELP, chat.id)).then((value) => {
-            resolve(value);
-        }).catch((error) => {
-            reject(error);
-        })
+        resolve(template(messages.HELP, chat.id));
     });
 };

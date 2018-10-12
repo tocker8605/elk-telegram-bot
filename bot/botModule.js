@@ -10,24 +10,29 @@ bot.init = function(token) {
     this.subscribers = new Set();
 
     this.api.on('message', (message) => {
-        const { text, from } = message;
+        const {chat, text} = message;
 
         if (!text) {
             return;
         }
 
+        if (!this.subscribers.has(chat.id.toString())) {
+            this.sendMessage(chat.id, '[ERROR] 인가된 사용자가 아닙니다.');
+            return;
+        }
+
         this.methods.forEach(method => {
-            if (method.regex.test(text)) {
-                method.function(message)
+            const matches = text.match(method.regex);
+            if (matches) {
+                method.function(message, matches)
                     .then(
-                        (value) => {
-                            // TODO: logger
-                            console.log(value);
+                        (message) => {
+                            this.sendMessage(chat.id, message);
                         }
                     )
                     .catch(
-                        (reason) => {
-                            console.log(reason);
+                        (errorMessage) => {
+                            this.sendMessage(chat.id, '[ERROR] ' + errorMessage);
                         }
                     )
             }
@@ -62,6 +67,13 @@ bot.clearSubscriber = function() {
     this.subscribers.clear();
 };
 
+bot.sendMessage = function(subscriber, message) {
+    this.api.sendMessage(subscriber, message).catch((error) => {
+        // TODO: logger
+        console.log(error);
+    });
+};
+
 bot.sendMessageToSubscriber = function(message) {
     let sendPromises = [];
     this.subscribers.forEach((subscriber) => {
@@ -80,7 +92,7 @@ bot.addSchedule = function(cron, scheduleFunction) {
                 this.sendMessageToSubscriber(message);
             }
         }).catch((errorMessage) => {
-            this.sendMessageToSubscriber('[CRITICAL] ' + errorMessage);
+            this.sendMessageToSubscriber('[ERROR] ' + errorMessage);
         })
     });
     this.schedules.push(newSchedule);

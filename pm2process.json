@@ -1,0 +1,16 @@
+{
+  "apps": [{
+    "name": "elk-bot",
+    "script": "bin/www",
+    "watch": false,
+    "env_production": {
+      "DEBUG": "elk-telegram-bot:*",
+      "TELEGRAM_TOKEN": "640619432:AAHw9fWFc3FoOnMSnMP0mpjq8ST1DKGiGKQ",
+      "TELEGRAM_SUBSCRIBERS": "162320154"
+    },
+    "exec_mode": "cluster",
+    "instances": 0,
+    "out_file": "/Users/tocker/data/log/elk-bot/out.log",
+    "error_file": "/Users/tocker/data/log/elk-bot/err.log"
+  }]
+}

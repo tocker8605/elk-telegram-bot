@@ -4,7 +4,7 @@ const {messages, template} = require('../messages/messageTemplateModule');
 // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html#ranges-on-dates
 
 module.exports = {
-    elasticsearchCheckRecent: function (alertTitle, indexPattern, queryMap, periodDateMath, alertLength) {
+    elasticsearchCheckRecent: function (alertTitle, indexPattern, queryMap, periodDateMath, searchLength, alertLength) {
         return new Promise((resolve, reject) => {
             request.post({
                 uri: "http://localhost:9200/" + indexPattern + "/_search",
@@ -12,6 +12,7 @@ module.exports = {
                     "Content-type": "application/json",
                 },
                 json: {
+                    "size": searchLength || 10,
                     "query": {
                         "bool": {
                             "must": [

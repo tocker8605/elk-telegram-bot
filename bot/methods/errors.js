@@ -4,23 +4,23 @@ const request = require('request');
 module.exports = function(message, matches) {
     return new Promise((resolve, reject) => {
 
-        if (matches.length > 4) {
+        if (matches.length === 3) {
             let indexPattern = matches[1] || '*';
-            let queryKey = matches[2];
-            let queryValue = matches[3];
-            let dateMath = matches[4] || 'now-1d';
-            let queryMap = {}; queryMap[queryKey] = queryValue;
+            let dateMath = matches[2] || 'now-1d';
             request.post({
                 uri: "http://localhost:9200/" + indexPattern + "/_search",
                 headers: {
                     "Content-type": "application/json",
                 },
                 json: {
+                    "size": 30,
                     "query": {
                         "bool": {
                             "must": [
                                 {
-                                    "match": queryMap
+                                    "match": {
+                                        "loglevel": "ERROR"
+                                    }
                                 },
                                 {
                                     "range": {
@@ -39,11 +39,11 @@ module.exports = function(message, matches) {
                     return reject(template(messages.CRITICAL_ELK, error));
                 }
                 let results = body['hits']['hits'] || [];
-                resolve(template(messages.METHOD_ELK, results.length, results.map(v => v['_source'][queryKey]).join('\n')));
+                resolve(template(messages.ERRORS_ELK, results.length, results.slice(0, 30).map(v => v['_source']['errormsg']).join('\n')));
             });
         }
         else {
-            reject('잘못된 사용 방법입니다. :\n/es [indexPattern] [queryKey] [queryMap] [dateMath]');
+            reject('잘못된 사용 방법입니다. :\n/errors [indexPattern:*] [dateMath:now-1d]');
         }
     });
 };

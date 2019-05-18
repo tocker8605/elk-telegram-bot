@@ -9,14 +9,14 @@ const usersRouter = require('./routes/users');
 
 const bot = require('./bot/botModule');
 const botMethodHelp = require('./bot/methods/help');
-const botMethodElasticsearch = require('./bot/methods/elasticsearch');
+const botMethodErrors = require('./bot/methods/errors');
 const {elasticsearchCheckRecent} = require('./bot/operation/elasticsearch');
 
 bot.init(process.env.TELEGRAM_TOKEN);
 bot.addSubscriber(process.env.TELEGRAM_SUBSCRIBERS.split(','));
 bot.addMethod(/^\/help/, botMethodHelp);
-bot.addMethod(/^\/es\s(.+?)$/, botMethodElasticsearch);
-bot.addSchedule('* * * * *', () => {return elasticsearchCheckRecent('뉴썸', 'log-analytics-*', {'errormsg': 'read time out'}, 'now-60d', 5)});
+bot.addMethod(/^\/errors\s(.+?)\s(.+?)$/, botMethodErrors);
+bot.addSchedule('* * * * *', () => {return elasticsearchCheckRecent('뉴썸', 'log-analytics-*', {'errormsg': 'read time out'}, 'now-360d', 100, 5)});
 
 let app = express();
 
